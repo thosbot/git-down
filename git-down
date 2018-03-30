@@ -1,0 +1,13 @@
+#!/bin/bash
+
+H1='\033[1;34m'
+NC='\033[0m' # No Color
+
+echo -e "${H1}STATUS${NC}"
+git status
+
+echo -e "\n${H1}STASH${NC}"
+git stash list
+
+echo -e "\n${H1}HISTORY${NC}"
+git log --all -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(48,trunc)%s" --date=format:"[%m-%d %H:%M]"
