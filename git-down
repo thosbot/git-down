@@ -1,7 +1,10 @@
 #!/bin/bash
 
 H1='\033[1;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
+
+IT='\033[3m'
+NI='\033[23m'
 
 curr_branch=$(git rev-parse --abbrev-ref HEAD)
 
@@ -18,4 +21,9 @@ else
 fi
 
 echo -e "\n${H1}STASH${NC}"
-git stash list
+STASH=$(git stash list)
+if [ -z "$STASH" ]; then
+    echo -e "${IT}Stash is empty${NI}"
+else
+    echo -e $STASH
+fi
