@@ -9,32 +9,46 @@ ni='\033[23m'
 
 curr_branch=$(git rev-parse --abbrev-ref HEAD)
 
-echo -e "${blue}STATUS${nc}"
-git status
+main() {
+    show_status
+    show_log
+    show_stash
+}
 
-if [[ $curr_branch != "main" ]]; then
-    echo
-    echo -e "${blue}COMMITS${nc}"
-    log=$(git log --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph main..)
-    if [ -z "$log" ]; then
-        echo -e "${it}No commits so far in ${green}$curr_branch${nc}${ni}"
-    else
-        echo -e "$log"
-    fi
-else
-    echo -e "\n${blue}HISTORY${nc}"
-    log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(48,trunc)%s" --date=format:"[%m-%d %H:%M]")
-    if [ -z "$log" ]; then
-        echo -e "${it}No history to show${ni}"
-    else
-        echo -e "$log"
-    fi
-fi
+show_status() {
+    echo -e "${blue}STATUS${nc}"
+    git status
+}
 
-echo -e "\n${blue}STASH${nc}"
-stash=$(git stash list)
-if [ -z "$stash" ]; then
-    echo -e "${it}Stash is empty${ni}"
-else
-    echo -e $stash
-fi
+show_log() {
+    if [[ $curr_branch != "main" ]]; then
+        echo
+        echo -e "${blue}COMMITS${nc}"
+        log=$(git log --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph main..)
+        if [ -z "$log" ]; then
+            echo -e "${it}No commits so far in ${green}$curr_branch${nc}${ni}"
+        else
+            echo -e "$log"
+        fi
+    else
+        echo -e "\n${blue}HISTORY${nc}"
+        log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(48,trunc)%s" --date=format:"[%m-%d %H:%M]")
+        if [ -z "$log" ]; then
+            echo -e "${it}No history to show${ni}"
+        else
+            echo -e "$log"
+        fi
+    fi
+}
+
+show_stash() {
+    echo -e "\n${blue}STASH${nc}"
+    stash=$(git stash list)
+    if [ -z "$stash" ]; then
+        echo -e "${it}Stash is empty${ni}"
+    else
+        echo -e $stash
+    fi
+}
+
+main "$@"; exit
