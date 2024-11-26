@@ -7,12 +7,32 @@ nc='\033[0m'
 it='\033[3m'
 ni='\033[23m'
 
-curr_branch=$(git rev-parse --abbrev-ref HEAD)
+root="main"
 
 main() {
+    parse_opts
     show_status
     show_log
     show_stash
+}
+
+parse_opts() {
+    # First positional param is the root branch
+    if [ "$1" != ""  ]; then
+        root="$1"
+        return
+    fi
+
+    remote_count=$(git remote | wc -l)
+    if (( $remote_count == 1 )); then
+        if [[ $remote != "main" ]]; then
+            remote=$(git remote)
+            root=$(git remote show $remote | grep "HEAD branch" | sed 's/.*: //')
+        fi
+    elif (( $remote_count > 1 )); then
+        echo "Found more than one remote -- must set remote manually"
+        exit 1
+    fi
 }
 
 show_status() {
@@ -21,10 +41,11 @@ show_status() {
 }
 
 show_log() {
-    if [[ $curr_branch != "main" ]]; then
-        echo
-        echo -e "${blue}COMMITS${nc}"
-        log=$(git log --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph main..)
+    curr_branch=$(git branch --show-current)
+    if [[ $curr_branch != $root ]]; then
+        # List commits in the current branch that aren't yet in root
+        echo -e "\n${blue}COMMITS${nc}"
+        log=$(git log --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph ${root}..)
         if [ -z "$log" ]; then
             echo -e "${it}No commits so far in ${green}$curr_branch${nc}${ni}"
         else
