@@ -50,7 +50,9 @@ show_log() {
     if [[ $curr_branch != $root ]]; then
         # List commits in the current branch that aren't yet in root
         echo -e "\n${blue}COMMITS${nc}"
-        log=$(git log --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph ${root}..)
+        # XXX: Would prefer to reverse but ... fatal: options '--reverse' and
+        #      '--graph' cannot be used together
+        log=$(git log --color --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph ${root}..)
         if [ -z "$log" ]; then
             echo -e "${it}No commits so far in ${green}$curr_branch${nc}${ni}"
         else
@@ -58,7 +60,7 @@ show_log() {
         fi
     else
         echo -e "\n${blue}HISTORY${nc}"
-        log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(48,trunc)%s" --date=format:"[%m-%d %H:%M]")
+        log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(48,trunc)%s" --date=format:"[%m-%d %H:%M]" 2>/dev/null)
         if [ -z "$log" ]; then
             echo -e "${it}No history to show${ni}"
         else
@@ -69,11 +71,11 @@ show_log() {
 
 show_stash() {
     echo -e "\n${blue}STASH${nc}"
-    stash=$(git stash list)
+    stash="$(git stash list)"
     if [ -z "$stash" ]; then
         echo -e "${it}Stash is empty${ni}"
     else
-        echo -e $stash
+        echo -e "$stash"
     fi
 }
 
