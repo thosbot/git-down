@@ -1,6 +1,7 @@
 #!/bin/bash
 
 blue='\033[1;34m'
+green='\033[1;32m'
 nc='\033[0m'
 
 it='\033[3m'
@@ -14,10 +15,20 @@ git status
 if [[ $curr_branch != "main" ]]; then
     echo
     echo -e "${blue}COMMITS${nc}"
-    git log --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph main..
+    log=$(git log --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph main..)
+    if [ -z "$log" ]; then
+        echo -e "${it}No commits so far in ${green}$curr_branch${nc}${ni}"
+    else
+        echo -e "$log"
+    fi
 else
     echo -e "\n${blue}HISTORY${nc}"
-    git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(48,trunc)%s" --date=format:"[%m-%d %H:%M]"
+    log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(48,trunc)%s" --date=format:"[%m-%d %H:%M]")
+    if [ -z "$log" ]; then
+        echo -e "${it}No history to show${ni}"
+    else
+        echo -e "$log"
+    fi
 fi
 
 echo -e "\n${blue}STASH${nc}"
