@@ -30,7 +30,7 @@ parse_opts() {
 
     remote_count=$(git remote | wc -l)
     if (( $remote_count == 1 )); then
-        if [[ $remote != "main" ]]; then
+        if [[ $root != "main" ]]; then
             remote=$(git remote)
             root=$(git remote show $remote | grep "HEAD branch" | sed 's/.*: //')
         fi
