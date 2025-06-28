@@ -60,7 +60,7 @@ show_log() {
         fi
     else
         echo -e "\n${blue}HISTORY${nc}"
-        log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(48,trunc)%s" --date=format:"[%m-%d %H:%M]" 2>/dev/null)
+        log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(64,trunc)%s" --date=format:"[%m-%d %H:%M]" 2>/dev/null)
         if [ -z "$log" ]; then
             echo -e "${it}No history to show${ni}"
         else
