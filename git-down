@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 blue='\033[1;34m'
 green='\033[1;32m'
@@ -7,37 +7,75 @@ nc='\033[0m'
 it='\033[3m'
 ni='\033[23m'
 
-root="main"
-
 main() {
-    git rev-parse --is-inside-work-tree >/dev/null
-    if (( $? != 0 )); then
-        exit 1
-    fi
-
-    parse_opts
+    validate_env
+    root=$(determine_root "$@")
     show_status
-    show_log
+    show_log "$root"
     show_stash
 }
 
-parse_opts() {
-    # First positional param is the root branch
-    if [ "$1" != ""  ]; then
+validate_env() {
+    if ! command -v git >/dev/null 2>&1; then
+        echo "fatal: git is not installed" >&2
+        exit 1
+    fi
+
+    if ! git rev-parse --is-inside-work-tree >/dev/null; then
+        echo "fatal: not in working tree" >&2
+        exit 1
+    fi
+
+    if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+        echo "fatal: no revisions found" >&2
+        exit 1
+    fi
+}
+
+determine_root() {
+    local root=""
+
+    # Check for user-provided root branch
+    if [[ $# -gt 0 && -n "$1" ]]; then
         root="$1"
+    fi
+
+    # Otherwise, look for configured root
+    if [[ -z "$root" ]]; then
+        root=$(git config --get down.root)
+    fi
+    if [[ -z "$root" ]]; then
+        root=$(git config --get init.defaultBranch)
+    fi
+
+    # Verify root if it exists
+    if [[ -n "$root" ]] && git rev-parse --verify --quiet "$root" >/dev/null 2>&1; then
+        echo "$root"
         return
     fi
 
-    remote_count=$(git remote | wc -l)
-    if (( $remote_count == 1 )); then
-        if [[ $root != "main" ]]; then
-            remote=$(git remote)
-            root=$(git remote show $remote | grep "HEAD branch" | sed 's/.*: //')
-        fi
-    elif (( $remote_count > 1 )); then
-        echo "Found more than one remote -- must set remote manually"
+    # Otherwise, auto-detect root
+    mapfile -t remotes < <(git remote)
+    count=${#remotes[@]}
+
+    if (( $count == 0 )); then
+        root=$(git rev-parse --abbrev-ref HEAD) # Use current branch
+
+    elif (( $count == 1 )); then
+        remote="${remotes[0]}"
+        root=$(git symbolic-ref "refs/remotes/$remote/HEAD" 2>/dev/null | sed 's|.*/||')
+
+    elif (( $count > 1 )); then
+        echo "fatal: can't determine root branch" >&2
         exit 1
     fi
+
+    if [[ -z "$root" ]] || ! git rev-parse --verify --quiet "$root" >/dev/null 2>&1; then
+        echo "fatal: invalid root branch" >&2
+        exit 1
+    fi
+
+    echo "$root"
 }
 
 show_status() {
@@ -46,22 +84,22 @@ show_status() {
 }
 
 show_log() {
+    local root="$1"
     curr_branch=$(git branch --show-current)
-    if [[ $curr_branch != $root ]]; then
+    if [[ "$curr_branch" != "$root" ]]; then
         # List commits in the current branch that aren't yet in root
         echo -e "\n${blue}COMMITS${nc}"
-        # XXX: Would prefer to reverse but ... fatal: options '--reverse' and
-        #      '--graph' cannot be used together
-        log=$(git log --color --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph ${root}..)
-        if [ -z "$log" ]; then
-            echo -e "${it}No commits so far in ${green}$curr_branch${nc}${ni}"
+        log=$(git log --color --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph "${root}"..)
+        if [[ -z "$log" ]]; then
+            echo -e "${it}No commits so far in ${green}${curr_branch}${nc}${ni}"
         else
             echo -e "$log"
         fi
     else
+        # Otherwise, show repo history
         echo -e "\n${blue}HISTORY${nc}"
         log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(64,trunc)%s" --date=format:"[%m-%d %H:%M]" 2>/dev/null)
-        if [ -z "$log" ]; then
+        if [[ -z "$log" ]]; then
             echo -e "${it}No history to show${ni}"
         else
             echo -e "$log"
@@ -72,7 +110,7 @@ show_log() {
 show_stash() {
     echo -e "\n${blue}STASH${nc}"
     stash="$(git stash list)"
-    if [ -z "$stash" ]; then
+    if [[ -z "$stash" ]]; then
         echo -e "${it}Stash is empty${ni}"
     else
         echo -e "$stash"
