@@ -89,7 +89,7 @@ show_log() {
     if [[ "$curr_branch" != "$root" ]]; then
         # List commits in the current branch that aren't yet in root
         echo -e "\n${blue}COMMITS${nc}"
-        log=$(git log --color --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --graph "${root}"..)
+        log=$(git log --color --no-merges --pretty='%C(yellow)%h%d %Creset%an %Cgreen%ah%Creset %s' --reverse "${root}"..)
         if [[ -z "$log" ]]; then
             echo -e "${it}No commits so far in ${green}${curr_branch}${nc}${ni}"
         else
@@ -98,7 +98,7 @@ show_log() {
     else
         # Otherwise, show repo history
         echo -e "\n${blue}HISTORY${nc}"
-        log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(64,trunc)%s" --date=format:"[%m-%d %H:%M]" 2>/dev/null)
+        log=$(git log -n 10 --no-merges --format="%cd %h %<(16,trunc)%aN %<(64,trunc)%s" --date=format:"[%m-%d %H:%M]" --reverse 2>/dev/null)
         if [[ -z "$log" ]]; then
             echo -e "${it}No history to show${ni}"
         else
