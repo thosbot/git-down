@@ -15,6 +15,12 @@ Bash script that combines multiple Git commands into a unified status display sh
 Git automatically discovers executables named `git-<name>` in your `$PATH`,
 so this makes it available as `git down`.
 
+To enable branch tab-completion, source the completion file in your `~/.bashrc`:
+
+```bash
+source /path/to/git-down.bash
+```
+
 ## Configuration
 
 Set a default root branch in your Git config. The script will also try the
